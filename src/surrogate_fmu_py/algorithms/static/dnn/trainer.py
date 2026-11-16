@@ -6,7 +6,7 @@ from dataclasses import dataclass, asdict, field
 
 import torch
 
-from ....contracts import TrainerLike, CoderLike, ReporterLike
+from ....contracts import TrainerLike, CoderLike, CoreLike, DatasetLike, ReporterLike
 from ....arrays import Tensor, to_torch
 from ....implements import NoneReporter
 from ....utils import get_loss_function, create_optimizer
@@ -71,10 +71,9 @@ class DNNTrainerConfig:
     pass
 
 
-class DNNTrainer(torch.nn.Module, TrainerLike):
+class DNNTrainer(TrainerLike):
     
     def __init__(self) -> None:
-        super().__init__()
         self.config_: DNNTrainerConfig = DNNTrainerConfig()
         pass
 
@@ -86,9 +85,9 @@ class DNNTrainer(torch.nn.Module, TrainerLike):
     def train(
         self,
         coder: CoderLike,
-        core: DNNCore,
-        train_dataset: StaticTorchDataset,
-        validation_dataset: StaticTorchDataset,
+        core: CoreLike,
+        train_dataset: DatasetLike,
+        validation_dataset: DatasetLike,
         reporter: ReporterLike | None = None
     ) -> DNNCore:
         if reporter is None:
@@ -97,6 +96,15 @@ class DNNTrainer(torch.nn.Module, TrainerLike):
         reporter.message("DNN: Start Training, Prepare Components.")
         reporter.progress(0.0, message="DNN: Preparing Training Components.")
         torch.manual_seed(self.config_.seed)
+        if not isinstance(core, DNNCore):
+            raise TypeError("core must be an instance of DNNCore.")
+            pass
+        if not isinstance(train_dataset, StaticTorchDataset):
+            raise TypeError("train_dataset must be an instance of StaticTorchDataset.")
+            pass
+        if not isinstance(validation_dataset, StaticTorchDataset):
+            raise TypeError("validation_dataset must be an instance of StaticTorchDataset.")
+            pass
         train_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(
             dataset=train_dataset,
             batch_size=self.config_.batch_size,
@@ -193,7 +201,8 @@ class DNNTrainer(torch.nn.Module, TrainerLike):
                 pass
             pass
         core.load_state_dict(best_state_dict)
-        reporter.message(f"DNN: Training Completed. Best Validation Loss: {best_loss:.6f}.", progress=100.0)
+        reporter.progress(100.0, message=f"DNN: Training Completed with Loss {best_loss:.6f}.")
+        reporter.message(f"DNN: Training Completed. Best Validation Loss: {best_loss:.6f}.")
         return core
         pass
 

@@ -11,6 +11,7 @@ __all__ = [
 
     "Scaler",
     "get_scaler",
+    "concat_scalers",
     
     "Coder",
 

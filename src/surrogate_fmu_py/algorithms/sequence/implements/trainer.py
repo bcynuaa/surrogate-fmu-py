@@ -6,7 +6,7 @@ from copy import deepcopy
 
 import torch
 
-from ....contracts import TrainerLike, CoderLike, ReporterLike
+from ....contracts import TrainerLike, CoderLike, CoreLike, DatasetLike, ReporterLike
 from ....implements import NoneReporter
 from ....arrays import Tensor, to_torch
 from ....utils import get_loss_function, create_optimizer
@@ -86,9 +86,9 @@ class WindowTrainer(TrainerLike):
     def train(
         self,
         coder: CoderLike,
-        core: SequenceCoreTemplate,
-        train_dataset: WindowDataset,
-        validation_dataset: WindowDataset,
+        core: CoreLike,
+        train_dataset: DatasetLike,
+        validation_dataset: DatasetLike,
         reporter: ReporterLike | None = None
     ) -> SequenceCoreTemplate:
         if reporter is None:
@@ -98,6 +98,15 @@ class WindowTrainer(TrainerLike):
         reporter.message(f"{name}: Start Training, Prepare Components.")
         reporter.progress(0.0, message=f"{name}: Preparing Training Components.")
         torch.manual_seed(self.config_.seed)
+        if not isinstance(core, SequenceCoreTemplate):
+            raise TypeError(f"{name}: core must be an instance of SequenceCoreTemplate.")
+            pass
+        if not isinstance(train_dataset, WindowDataset):
+            raise TypeError(f"{name}: train_dataset must be an instance of WindowDataset.")
+            pass
+        if not isinstance(validation_dataset, WindowDataset):
+            raise TypeError(f"{name}: validation_dataset must be an instance of WindowDataset.")
+            pass
         train_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(
             dataset=train_dataset,
             batch_size=self.config_.batch_size,
@@ -194,7 +203,8 @@ class WindowTrainer(TrainerLike):
                 pass
             pass
         core.load_state_dict(best_state_dict)
-        reporter.message(f"{name}: Training Completed. Best Validation Loss: {best_loss:.6f}.", progress=100.0)
+        reporter.progress(100.0, message=f"{name}: Training Completed with Loss {best_loss:.6f}.")
+        reporter.message(f"{name}: Training Completed. Best Validation Loss: {best_loss:.6f}.")
         return core
         pass
 

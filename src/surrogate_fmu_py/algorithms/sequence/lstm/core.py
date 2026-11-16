@@ -80,4 +80,8 @@ class LSTMCore(SequenceCoreTemplate):
         return dy_pred + x[:, -1, self.config_.input_dim:]
         pass
 
+    def get_config_dict(self) -> Dict[str, Any]:
+        return self.config_.to_dict()
+        pass
+
     pass

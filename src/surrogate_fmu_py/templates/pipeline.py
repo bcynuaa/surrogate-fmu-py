@@ -90,7 +90,7 @@ class PipelineTemplate(PipelineLike):
         raise NotImplementedError("fmu_export_artifacts is not implemented yet.")
         pass
 
-    def rollout(self, datablock: DataBlockLike, y0: Array | None, rollout_settings: Dict[str, Any]) -> DataBlockLike:
+    def rollout(self, datablock: DataBlockLike, y0: Array | None, rollout_settings: Dict[str, Any] | None) -> DataBlockLike:
         raise NotImplementedError("rollout is not implemented yet.")
         pass
 

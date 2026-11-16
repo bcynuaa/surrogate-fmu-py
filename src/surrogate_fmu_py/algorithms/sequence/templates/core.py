@@ -23,8 +23,7 @@ class SequenceCoreTemplate(torch.nn.Module, CoreLike):
         pass
 
     def init(self, params: Dict[str, Any]) -> Self:
-        self.config_: ConfigLike = ConfigLike.from_dict(config=params)
-        return self
+        raise NotImplementedError("Subclasses must implement the init method.")
         pass
 
     def mode_train(self) -> Self:
@@ -50,7 +49,7 @@ class SequenceCoreTemplate(torch.nn.Module, CoreLike):
         model_path: Path = Path(path)
         model_path.parent.mkdir(parents=True, exist_ok=True)
         state_dict: Dict[str, Any] = {
-            "config": self.config_.to_dict(),
+            "config": self.get_config_dict(),
             "state_dict": self.state_dict(),
         }
         torch.save(state_dict, model_path)
@@ -64,6 +63,10 @@ class SequenceCoreTemplate(torch.nn.Module, CoreLike):
         self.init(params=config_dict)
         self.load_state_dict(state_dict.get("state_dict", {}))
         return self
+        pass
+
+    def get_config_dict(self) -> Dict[str, Any]:
+        raise NotImplementedError("Subclasses must implement the get_config_dict method.")
         pass
 
     pass

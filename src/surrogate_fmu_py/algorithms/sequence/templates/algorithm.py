@@ -32,7 +32,7 @@ class SequenceAlgorithmTemplate(AlgorithmLike):
         x_scaler.finalize()
         y_scaler.finalize()
         input_scaler: Scaler = concat_scalers(x_scaler, y_scaler)
-        output_scaler: Scaler = concat_scalers(y_scaler, x_scaler)
+        output_scaler: Scaler = y_scaler
         return Coder().init(input_scaler=input_scaler, output_scaler=output_scaler)
         pass
     
