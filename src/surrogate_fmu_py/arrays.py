@@ -11,7 +11,7 @@ Tensor: TypeAlias = torch.Tensor  # type alias for torch tensor
 ArrayOrTensor: TypeAlias = Array | Tensor  # type alias for numpy array or torch tensor
 
 def numpy_to_torch(x: Array) -> Tensor:
-    return torch.from_numpy(ndarray=x.astype(np.float32))       
+    return torch.from_numpy(x.astype(np.float32))       
     pass
 
 

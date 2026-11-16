@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict, Self
+from typing import List, Dict, Self, Type
 
 import numpy as np
 
@@ -218,7 +218,7 @@ def concat_scalers(*scalers: Scaler) -> Scaler:
     pass
 
 
-SCALERS_DICT: Dict[str, type[Scaler]] = {
+SCALERS_DICT: Dict[str, Type[Scaler]] = {
     "none": NoneScaler,
     "minmax": MinMaxScaler,
     "global_minmax": GlobalMinMaxScaler,

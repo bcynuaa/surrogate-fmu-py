@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import List, Dict, Any
+from typing import List, Sequence, Dict, Any
 
 import numpy as np
 import torch
 
-from ....contracts import DatasetLike, DataBlockLike
+from ....contracts import DataBlockLike, DatasetLike
 from ....arrays import Array, Tensor, to_numpy, to_torch
 
 
@@ -14,6 +14,10 @@ class StaticFullDataset(DatasetLike):
     def __init__(self, params: Dict[str, Any]) -> None:
         self.x_list_: List[Array] = []
         self.y_list_: List[Array] = []
+        pass
+
+    def init(self, params: Dict[str, Any]) -> StaticFullDataset:
+        return self
         pass
 
     def feed(self, datablock: DataBlockLike) -> None:
@@ -34,6 +38,16 @@ class StaticFullDataset(DatasetLike):
 
     def y(self) -> Array:
         return self.y_
+        pass
+
+    @classmethod
+    def from_datablocks(cls, datablocks: List[DataBlockLike], params: Dict[str, Any]) -> StaticFullDataset:
+        dataset: StaticFullDataset = cls(params=params)
+        for datablock in datablocks:
+            dataset.feed(datablock=datablock)
+            pass
+        dataset.finalize()
+        return dataset
         pass
 
     pass
@@ -74,6 +88,14 @@ class StaticTorchDataset(torch.utils.data.Dataset, DatasetLike):
         return to_numpy(x=self.y_)
         pass
 
-    pass
+    @classmethod
+    def from_datablocks(cls, datablocks: Sequence[DataBlockLike], params: Dict[str, Any]) -> StaticTorchDataset:
+        dataset: StaticTorchDataset = cls(params=params)
+        for datablock in datablocks:
+            dataset.feed(datablock=datablock)
+            pass
+        dataset.finalize()
+        return dataset
+        pass
 
-    
+    pass

@@ -1,6 +1,8 @@
 .vscode/
 .venv/
 **/__pycache__/
+drafts/
 
 *.pyc
 *.pyd
+*.ipynb
