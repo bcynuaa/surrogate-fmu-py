@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 import zipfile
 
 from .contracts import PipelineLike, AlgorithmLike, CoderLike, CoreLike
-from .registry import get_algorithm
+from .algorithms import get_algorithm, get_available_algorithms
 from .implements import Coder
 
 def load(path: str | Path) -> PipelineLike:

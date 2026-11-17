@@ -1,22 +1,32 @@
 from __future__ import annotations
 
-from typing import Sequence, Dict, Any
+from typing import Dict, Any
 
-from ....contracts import DataBlockLike
-from ..templates import StaticAlgorithmTemplate
-from ..implements import StaticTorchDataset
-from .core import DNNCoreConfig, DNNCore
-from .trainer import DNNTrainerConfig, DNNTrainer
+from ..shared import (
+    SequenceWindowDatasetImplConfig, 
+    SequenceWindowTrainerImplConfig,
+    
+    SequenceWindowTrainerImplConfig,
+
+    SequenceAlgorithmTmpl,
+)
+from .narx_core import NARXCoreConfig, NARXCore
 
 
-class DNNAlgorithm(StaticAlgorithmTemplate):
+
+class NARXAlgorithm(SequenceAlgorithmTmpl):
+
+
+    def create_core(self, params: Dict[str, Any]) -> NARXCore:
+        core: NARXCore = NARXCore().init(params=params)
+        return core
+        pass
 
     def default_params(self) -> Dict[str, Any]:
         return DEFAULT_PARAMS_DICT.copy()
         pass
 
-    def format_params(self, overrides: Dict[str, Any]={}) -> Dict[str, Any]:
-        overrides = overrides.copy()
+    def format_params(self, overrides: Dict[str, Any]) -> Dict[str, Any]:
         params: Dict[str, Any] = self.default_params()
         params.update(overrides)
         # * check activations
@@ -51,21 +61,11 @@ class DNNAlgorithm(StaticAlgorithmTemplate):
         else:
             params["channel_weights"] = [1.0] * output_dim
             pass
+        # * check window = max(wx_dim, wy_dim)
+        wx_dim: int = params.get("wx_dim", 16)
+        wy_dim: int = params.get("wy_dim", 8)
+        params["window"] = max(wx_dim, wy_dim)
         return params
-        pass
-
-    def create_core(self, params: Dict[str, Any]) -> DNNCore:
-        core: DNNCore = DNNCore().init(params=params)
-        return core
-        pass
-
-    def create_dataset(self, datablocks: Sequence[DataBlockLike], params: Dict[str, Any]) -> StaticTorchDataset:
-        return StaticTorchDataset.from_datablocks(datablocks=datablocks, params=params)
-        pass
-
-    def create_trainer(self, params: Dict[str, Any]) -> DNNTrainer:
-        trainer: DNNTrainer = DNNTrainer().init(params=params)
-        return trainer
         pass
 
     pass
@@ -76,9 +76,12 @@ DEFAULT_PARAMS_DICT: Dict[str, Any] = {
     "x_scaler_mode": "normal",
     "y_scaler_mode": "normal",
 
+    # * dataset settings
+    **SequenceWindowDatasetImplConfig().to_dict(),
+
     # * model settings
-    **DNNCoreConfig().to_dict(),
-    
+    **NARXCoreConfig().to_dict(),
+
     # * training settings
-    **DNNTrainerConfig().to_dict(),
+    **SequenceWindowTrainerImplConfig().to_dict(),
 }

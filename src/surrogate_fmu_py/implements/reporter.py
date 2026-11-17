@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import List, Dict, Any
+
+import pandas as pd
 
 from ..contracts import ReporterLike
+
 
 class Reporter(ReporterLike):
 
@@ -22,7 +25,7 @@ class Reporter(ReporterLike):
             pass
         else:
             pg: float = self.pg_start_ + (self.pg_end_ - self.pg_start_) * progress / 100
-            return f"{pg:.2f}"
+            return f"{pg:06.2f}"
             pass
         pass
 
@@ -35,11 +38,9 @@ class Reporter(ReporterLike):
             pass
         pass
 
-    def message(self, message: str, **payloads: Any) -> None:
-        pass
+    def message(self, message: str, **payloads: Any) -> None: ...
     
-    def progress(self, progress: float, *, message: str | None = None, **payloads: Any) -> None:
-        pass
+    def progress(self, progress: float, *, message: str | None = None, **payloads: Any) -> None: ...
 
     pass
 
@@ -65,7 +66,40 @@ class ConsoleReporter(Reporter):
     def progress(self, progress: float, *, message: str | None = None, **payloads: Any) -> None:
         pg_str: str = self.format_progress(progress=progress)
         msg_str: str = self.format_message(message=message)
-        print(f"[PROGRESS: {pg_str}] {msg_str}")
+        print(f"[PROGRESS={pg_str}%] {msg_str}")
+        pass
+
+    pass
+
+
+class LossRecordReporter(Reporter):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.loss_records_: List[Dict[str, Any]] = []
+        pass
+
+    def parse_payloads(self, payloads: Dict[str, Any]) -> Dict[str, Any]:
+        loss_record: Dict[str, Any] = {}
+        loss_record["epoch"] = payloads.get("epoch", None)
+        loss_record["train_loss"] = payloads.get("train_loss", None)
+        loss_record["validation_loss"] = payloads.get("validation_loss", None)
+        loss_record["epoch_loss"] = payloads.get("epoch_loss", None)
+        return loss_record
+        pass
+
+    def message(self, message: str, **payloads: Any) -> None:
+        loss_record: Dict[str, Any] = self.parse_payloads(payloads=payloads)
+        self.loss_records_.append(loss_record)
+        pass
+
+    def progress(self, progress: float, *, message: str | None = None, **payloads: Any) -> None:
+        loss_record: Dict[str, Any] = self.parse_payloads(payloads=payloads)
+        self.loss_records_.append(loss_record)
+        pass
+
+    def loss_to_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame(self.loss_records_)
         pass
 
     pass

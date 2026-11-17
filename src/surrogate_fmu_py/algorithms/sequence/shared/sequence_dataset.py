@@ -4,18 +4,18 @@ from typing import List, Tuple, Dict
 from dataclasses import dataclass, asdict
 
 import torch
-from torch.serialization import T
 
 from ....contracts import DatasetLike, DataBlockLike
 from ....arrays import Array, Tensor, to_torch, concat_array
+from ....implements import DataBlock
 
 
 @dataclass(frozen=True)
-class WindowDatasetConfig:
+class SequenceWindowDatasetImplConfig:
     window: int = 16
     stride: int = 8
     @classmethod
-    def from_dict(cls, config: Dict[str, int]) -> WindowDatasetConfig:
+    def from_dict(cls, config: Dict[str, int]) -> SequenceWindowDatasetImplConfig:
         window: int = config.get("window", 16)
         stride: int = config.get("stride", 8)
         if window <= 1 or not isinstance(window, int):
@@ -24,7 +24,7 @@ class WindowDatasetConfig:
         if stride <= 0 or not isinstance(stride, int):
             raise ValueError(f"Stride must be a positive integer, got {stride}")
             pass
-        return WindowDatasetConfig(
+        return SequenceWindowDatasetImplConfig(
             window=window,
             stride=stride,
         )
@@ -36,7 +36,7 @@ class WindowDatasetConfig:
     pass
 
 
-class WindowDataset(torch.utils.data.Dataset, DatasetLike):
+class SequenceWindowDatasetImpl(torch.utils.data.Dataset, DatasetLike):
     """
     * input: [
     *     x[t-w+1, X], y[t-w, Y],
@@ -51,12 +51,12 @@ class WindowDataset(torch.utils.data.Dataset, DatasetLike):
 
     ! thus, a sample will contain **w+1** rows
     """
-    def __init__(self, params: Dict[str, int]) -> None:
-        self.init(params=params)
+    def __init__(self) -> None:
+        self.init(params=SequenceWindowDatasetImplConfig().to_dict())
         pass
 
-    def init(self, params: Dict[str, int]) -> WindowDataset:
-        self.config_ = WindowDatasetConfig.from_dict(params)
+    def init(self, params: Dict[str, int]) -> SequenceWindowDatasetImpl:
+        self.config_ = SequenceWindowDatasetImplConfig.from_dict(params)
         self.input_list_: List[Tensor] = []
         self.output_list_: List[Tensor] = []
         self.raw_xs_: List[Array] = []
@@ -90,8 +90,8 @@ class WindowDataset(torch.utils.data.Dataset, DatasetLike):
         return len(self.raw_xs_)
         pass
 
-    def block(self, index: int) -> Tuple[Array, Array]:
-        return self.raw_xs_[index], self.raw_ys_[index]
+    def block(self, index: int) -> DataBlock:
+        return DataBlock(x=self.raw_xs_[index], y=self.raw_ys_[index])
         pass
 
     def __len__(self) -> int:

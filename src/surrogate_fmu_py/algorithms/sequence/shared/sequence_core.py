@@ -5,36 +5,15 @@ from pathlib import Path
 
 import torch
 
-from ....contracts import CoreLike
+from ....contracts import TorchCoreLike
 from ....arrays import Array, to_numpy, to_torch
 
 
-class ConfigLike:
-    @classmethod
-    def from_dict(cls, config: Dict[str, Any]) -> ConfigLike: ...
-    def to_dict(self) -> Dict[str, Any]: ...
-    pass
+class SequenceCoreTmpl(TorchCoreLike):
 
-
-class SequenceCoreTemplate(torch.nn.Module, CoreLike):
-
-    def alg_family(self) -> str:
-        return "sequence"
-        pass
-
-    def init(self, params: Dict[str, Any]) -> Self:
-        raise NotImplementedError("Subclasses must implement the init method.")
-        pass
-
-    def mode_train(self) -> Self:
-        self.train()
-        return self
-        pass
-
-    def mode_eval(self) -> Self:
-        self.eval()
-        return self
-        pass
+    def alg_family(self) -> str: return "sequence"
+    def mode_train(self) -> Self: return self.train()
+    def mode_eval(self) -> Self: return self.to("cpu").eval()
 
     def predict(self, x: Array) -> Array:
         x_tensor: torch.Tensor = to_torch(x=x)
@@ -44,7 +23,7 @@ class SequenceCoreTemplate(torch.nn.Module, CoreLike):
         y: Array = to_numpy(x=y_tensor)
         return y
         pass
-    
+
     def save(self, path: str | Path) -> Self:
         model_path: Path = Path(path)
         model_path.parent.mkdir(parents=True, exist_ok=True)
@@ -65,8 +44,11 @@ class SequenceCoreTemplate(torch.nn.Module, CoreLike):
         return self
         pass
 
-    def get_config_dict(self) -> Dict[str, Any]:
-        raise NotImplementedError("Subclasses must implement the get_config_dict method.")
-        pass
+    def window_dim(self) -> int: return self.get_config_dict().get("window", 1)
+
+    def init(self, params: Dict[str, Any]) -> Self: raise NotImplementedError("Subclasses must implement the init method.")
+    def alg_name(self) -> str: raise NotImplementedError("Subclasses must implement the alg_name method.")
+
+    def get_config_dict(self) -> Dict[str, Any]: raise NotImplementedError("Subclasses must implement the get_config_dict method.")
 
     pass

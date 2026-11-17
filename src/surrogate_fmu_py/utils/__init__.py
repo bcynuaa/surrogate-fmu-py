@@ -6,6 +6,7 @@ from .torch_common import (
     get_loss_function,
     get_optimizer_class,
     create_optimizer,
+    AuxiliaryIntegratedCoderTorchModule,
 )
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "get_loss_function",
     "get_optimizer_class",
     "create_optimizer",
+    "AuxiliaryIntegratedCoderTorchModule",
 ]

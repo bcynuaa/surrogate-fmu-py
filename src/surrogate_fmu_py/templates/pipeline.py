@@ -13,7 +13,7 @@ from ..utils import time_stamp
 MANIFEST_FILENAME: str = "manifest.json"
 
 
-class PipelineTemplate(PipelineLike):
+class PipelineTmpl(PipelineLike):
     CODER_FILENAME: str = "coder.bin"
     CORE_FILENAME: str = "core.cbin"
 

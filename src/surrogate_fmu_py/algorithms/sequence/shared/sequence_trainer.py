@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-from typing import List, Dict, Callable
-from copy import deepcopy
+from typing import List, Dict, Any, Self, Callable
 from dataclasses import dataclass, asdict, field
+from copy import deepcopy
 
 import torch
 
 from ....contracts import TrainerLike, CoderLike, CoreLike, DatasetLike, ReporterLike
-from ....arrays import Tensor, to_torch
 from ....implements import NoneReporter
+from ....arrays import Tensor, to_torch
 from ....utils import get_loss_function, create_optimizer
-from ..implements import StaticTorchDataset
-from .core import DNNCore
+from .sequence_core import SequenceCoreTmpl
+from .sequence_dataset import SequenceWindowDatasetImpl
+
 
 @dataclass(frozen=True)
-class DNNTrainerConfig:
+class SequenceWindowTrainerImplConfig:
     seed: int = 42
     batch_size: int = 32
     shuffle: bool = True
@@ -31,7 +32,7 @@ class DNNTrainerConfig:
     channel_weights: List[float] = field(default_factory=lambda: [1.0, 1.0, 1.0])
 
     @classmethod
-    def from_dict(cls, config: dict) -> DNNTrainerConfig:
+    def from_dict(cls, config: Dict[str, Any]) -> SequenceWindowTrainerImplConfig:
         seed: int = config.get("seed", 42)
         batch_size: int = config.get("batch_size", 32)
         shuffle: bool = config.get("shuffle", True)
@@ -64,21 +65,21 @@ class DNNTrainerConfig:
         )
         pass
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
         pass
 
     pass
 
 
-class DNNTrainer(TrainerLike):
-    
+class SequenceWindowTrainerImpl(TrainerLike):
+
     def __init__(self) -> None:
-        self.config_: DNNTrainerConfig = DNNTrainerConfig()
+        self.init(params=SequenceWindowTrainerImplConfig().to_dict())
         pass
 
-    def init(self, params: Dict) -> DNNTrainer:
-        self.config_ = DNNTrainerConfig.from_dict(config=params)
+    def init(self, params: Dict[str, Any]) -> Self:
+        self.config_: SequenceWindowTrainerImplConfig = SequenceWindowTrainerImplConfig.from_dict(params)
         return self
         pass
 
@@ -89,21 +90,22 @@ class DNNTrainer(TrainerLike):
         train_dataset: DatasetLike,
         validation_dataset: DatasetLike,
         reporter: ReporterLike | None = None
-    ) -> DNNCore:
+    ) -> SequenceCoreTmpl:
         if reporter is None:
             reporter = NoneReporter()
             pass
-        reporter.message("DNN: Start Training, Prepare Components.")
-        reporter.progress(0.0, message="DNN: Preparing Training Components.")
+        name: str = core.alg_name().upper()
+        reporter.message(f"{name}: Start Training, Prepare Components.")
+        reporter.progress(0.0, message=f"{name}: Preparing Training Components.")
         torch.manual_seed(self.config_.seed)
-        if not isinstance(core, DNNCore):
-            raise TypeError("core must be an instance of DNNCore.")
+        if not isinstance(core, SequenceCoreTmpl):
+            raise TypeError(f"{name}: core must be an instance of SequenceCoreTemplate.")
             pass
-        if not isinstance(train_dataset, StaticTorchDataset):
-            raise TypeError("train_dataset must be an instance of StaticTorchDataset.")
+        if not isinstance(train_dataset, SequenceWindowDatasetImpl):
+            raise TypeError(f"{name}: train_dataset must be an instance of SequenceWindowDatasetImpl.")
             pass
-        if not isinstance(validation_dataset, StaticTorchDataset):
-            raise TypeError("validation_dataset must be an instance of StaticTorchDataset.")
+        if not isinstance(validation_dataset, SequenceWindowDatasetImpl):
+            raise TypeError(f"{name}: validation_dataset must be an instance of SequenceWindowDatasetImpl.")
             pass
         train_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(
             dataset=train_dataset,
@@ -135,8 +137,8 @@ class DNNTrainer(TrainerLike):
         epochs: int = self.config_.epochs
         # * assuming channel_weights have been formatted from top level's algorithm.format_params(overrides)
         channel_weights_tensor: Tensor = torch.tensor(self.config_.channel_weights, dtype=torch.float32, device=device)
-        reporter.message(f"DNN: Preparation Done. Start Training for {epochs} epochs.")
-        reporter.progress(5.0, message="DNN: Start Training, Enter Epochs.")
+        reporter.message(f"{name}: Preparation Done. Start Training for {epochs} epochs.")
+        reporter.progress(5.0, message=f"{name}: Start Training, Enter Epochs.")
         for epoch in range(epochs):
             core.train()
             train_loss: float = 0.0
@@ -172,7 +174,7 @@ class DNNTrainer(TrainerLike):
             epoch_loss: float = validation_loss
             reporter.progress(
                 5.0 + 95.0 * (epoch + 1) / epochs,
-                message=f"DNN: Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss:.6f}, Validation Loss: {validation_loss:.6f}",
+                message=f"{name}: Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss:.6f}, Validation Loss: {validation_loss:.6f}",
                 train_loss=train_loss,
                 validation_loss=validation_loss,
                 epoch_loss=epoch_loss,
@@ -191,7 +193,7 @@ class DNNTrainer(TrainerLike):
             if (epochs_without_improvement >= self.config_.patience) and self.config_.early_stop:
                 reporter.progress(
                     99.0, 
-                    message=f"DNN: Early Stopping Triggered at Epoch {epoch + 1}/{epochs} with Epoch Loss: {epoch_loss:.6f}.",
+                    message=f"{name}: Early Stopping Triggered at Epoch {epoch + 1}/{epochs} with Epoch Loss: {epoch_loss:.6f}.",
                     train_loss=train_loss,
                     validation_loss=validation_loss,
                     epoch_loss=epoch_loss,
@@ -201,8 +203,8 @@ class DNNTrainer(TrainerLike):
                 pass
             pass
         core.load_state_dict(best_state_dict)
-        reporter.progress(100.0, message=f"DNN: Training Completed with Loss {best_loss:.6f}.")
-        reporter.message(f"DNN: Training Completed. Best Validation Loss: {best_loss:.6f}.")
+        reporter.progress(100.0, message=f"{name}: Training Completed with Loss {best_loss:.6f}.")
+        reporter.message(f"{name}: Training Completed. Best Validation Loss: {best_loss:.6f}.")
         return core
         pass
 

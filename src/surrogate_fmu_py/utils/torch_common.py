@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 from typing import List, Dict, Callable, Type
+from collections.abc import Iterable
+from copy import deepcopy
 
 import torch
+
+from ..contracts import CoderLike, TorchCoreLike
+from ..arrays import Tensor, to_torch
 
 
 class ResLinear(torch.nn.Module):
@@ -123,4 +127,32 @@ def dense_layer(
         layer_list.append(torch.nn.Dropout(p=dropout))
         pass
     return torch.nn.Sequential(*layer_list)
+    pass
+
+
+class AuxiliaryIntegratedCoderTorchModule(torch.nn.Module):
+
+    def __init__(self, coder: CoderLike, core: TorchCoreLike) -> None:
+        super().__init__()
+        self.coder_: CoderLike = deepcopy(coder).to_torch()
+        self.core_: TorchCoreLike = deepcopy(core).mode_eval()
+        input_shift: Tensor = to_torch(self.coder_.input_scaler().shift())
+        input_scale: Tensor = to_torch(self.coder_.input_scaler().scale())
+        output_shift: Tensor = to_torch(self.coder_.output_scaler().shift())
+        output_scale: Tensor = to_torch(self.coder_.output_scaler().scale())
+        self.input_shift_: Tensor = torch.nn.Parameter(input_shift, requires_grad=False)
+        self.input_scale_: Tensor = torch.nn.Parameter(input_scale, requires_grad=False)
+        self.output_shift_: Tensor = torch.nn.Parameter(output_shift, requires_grad=False)
+        self.output_scale_: Tensor = torch.nn.Parameter(output_scale, requires_grad=False)
+        pass
+
+    def forward(self, u: Tensor) -> Tensor:
+        ub: Tensor = (u - self.input_shift_) / self.input_scale_
+        yb: Tensor = self.core_(ub)
+        y: Tensor = yb * self.output_scale_ + self.output_shift_
+        return y
+        pass
+
+    pass
+
     pass

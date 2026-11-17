@@ -8,7 +8,7 @@ import torch
 
 from ....arrays import Array, Tensor, to_numpy, to_torch
 from ....utils import dense_layer
-from ..templates import StaticCoreTemplate
+from ..shared import StaticCoreTmpl
 
 
 @dataclass(frozen=True)
@@ -41,7 +41,7 @@ class DNNCoreConfig:
     pass
 
 
-class DNNCore(torch.nn.Module, StaticCoreTemplate):
+class DNNCore(torch.nn.Module, StaticCoreTmpl):
 
     def alg_name(self) -> str:
         return "dnn"

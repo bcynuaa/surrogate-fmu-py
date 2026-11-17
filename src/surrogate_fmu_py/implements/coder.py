@@ -8,7 +8,7 @@ import numpy as np
 
 from ..contracts import CoderLike, ScalerLike
 from ..arrays import ArrayOrTensor, to_numpy
-from ..implements import Scaler
+from .scaler import Scaler
 
 
 def byte_array(x: ArrayOrTensor) -> bytes:
@@ -61,6 +61,14 @@ class Coder(CoderLike):
 
     def output_dim(self) -> int:
         return self.output_scaler_.dim()
+        pass
+
+    def input_scaler(self) -> ScalerLike:
+        return self.input_scaler_
+        pass
+
+    def output_scaler(self) -> ScalerLike:
+        return self.output_scaler_
         pass
 
     def save(self, path: str | Path) -> Self:

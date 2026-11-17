@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .pipeline import PipelineTemplate
+from .pipeline import PipelineTmpl
 
 __all__ = [
-    "PipelineTemplate",
+    "PipelineTmpl",
 ]
