@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from operator import irshift
 from typing import Any
 
 import numpy as np
@@ -282,7 +283,8 @@ def build_onnx(
         [helper.make_tensor_value_info(output_name, TensorProto.DOUBLE, [None, len(outputs)])],
         initializer=initializers,
     )
-    proto = helper.make_model(graph, producer_name="surrogate-fmu")
+    # * currently fix ir_version to 9 for compatibility with onnxruntime
+    proto = helper.make_model(graph, producer_name="surrogate-fmu", ir_version=9)
     proto.opset_import[0].version = 11
     onnx.checker.check_model(proto)
     return proto
