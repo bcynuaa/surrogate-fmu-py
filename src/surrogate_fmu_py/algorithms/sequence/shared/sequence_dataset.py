@@ -69,7 +69,9 @@ class SequenceWindowDatasetImpl(torch.utils.data.Dataset, DatasetLike):
         ys: Array = datablock.y()
         self.raw_xs_.append(xs)
         self.raw_ys_.append(ys)
-        assert xs.shape[0] >= self.config_.window, f"Datablock x has {xs.shape[0]} rows, but window size is {self.config_.window}"
+        if not xs.shape[0] >= self.config_.window+1:
+            raise ValueError(f"Datablock x has {xs.shape[0]} rows, but window size is {self.config_.window}")
+            pass
         current_start_index: int = 0
         while current_start_index + self.config_.window + 1 <= xs.shape[0]:
             x_input: Array = xs[current_start_index+1:current_start_index+self.config_.window+1, :]

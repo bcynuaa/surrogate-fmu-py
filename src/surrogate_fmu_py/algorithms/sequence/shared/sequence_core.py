@@ -14,6 +14,7 @@ class SequenceCoreTmpl(TorchCoreLike):
     def alg_family(self) -> str: return "sequence"
     def mode_train(self) -> Self: return self.train()
     def mode_eval(self) -> Self: return self.to("cpu").eval()
+    def fmu_required_binary(self) -> str: return "window_pure_onnx"
 
     def predict(self, x: Array) -> Array:
         x_tensor: torch.Tensor = to_torch(x=x)

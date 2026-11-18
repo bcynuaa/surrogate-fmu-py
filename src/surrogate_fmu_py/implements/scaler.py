@@ -154,6 +154,7 @@ class GlobalMinMaxScaler(Scaler):
             raise ValueError(f"{self.__class__.__name__}: no data fed to scaler")
             pass
         self.shift_: ArrayOrTensor = np.zeros(self.dim_, dtype=np.float64) if self.dim_ is not None else np.zeros(0, dtype=np.float64)
+        self.shift_ += self.global_min_ if self.global_min_ is not None else np.zeros(0, dtype=np.float64)
         self.scale_: ArrayOrTensor = np.full(self.dim_, self.global_max_ - self.global_min_, dtype=np.float64) if self.dim_ is not None else np.ones(0, dtype=np.float64)
         self.scale_[self.scale_ <= 0.0] = 1.0  # avoid division by zero
         return self

@@ -8,6 +8,6 @@ def time_stamp(format: str = "%Y%m%d_%H%M%S") -> str:
     return datetime.datetime.now().strftime(format)
     pass
 
-def token(text: str) -> str:
+def get_token(text: str) -> str:
     return uuid.uuid5(uuid.NAMESPACE_DNS, text).hex
     pass

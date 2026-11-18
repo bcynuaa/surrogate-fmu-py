@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Sequence, Dict, Any
 
 from ....contracts import DataBlockLike
+from ....utils import format_dict
 from ..shared import StaticAlgorithmTmpl
 from ..shared import StaticTorchDatasetImpl
 from .dnn_core import DNNCoreConfig, DNNCore
@@ -16,9 +17,7 @@ class DNNAlgorithm(StaticAlgorithmTmpl):
         pass
 
     def format_params(self, overrides: Dict[str, Any]={}) -> Dict[str, Any]:
-        overrides = overrides.copy()
-        params: Dict[str, Any] = self.default_params()
-        params.update(overrides)
+        params: Dict[str, Any] = format_dict(self.default_params(), overrides)
         # * check activations
         hidden_len: int = len(params.get("hidden_layers", []))
         activations: Any = params.get("activations", None)

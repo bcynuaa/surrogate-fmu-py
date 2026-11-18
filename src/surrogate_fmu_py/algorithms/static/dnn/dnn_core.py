@@ -102,7 +102,7 @@ class DNNCore(torch.nn.Module, StaticCoreTmpl):
         return self
         pass
 
-    def fmu_export_artifacts(self, fmu_path: str | Path) -> None:
+    def fmu_export_core_artifacts(self, fmu_path: str | Path) -> None:
         self.mode_eval()
         fmu_dir: Path = Path(fmu_path)
         fmu_dir.mkdir(parents=True, exist_ok=True)

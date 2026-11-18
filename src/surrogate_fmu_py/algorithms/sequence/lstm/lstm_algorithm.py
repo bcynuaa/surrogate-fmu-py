@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Any
 
+from ....utils import format_dict
 from ..shared import (
     SequenceWindowDatasetImplConfig, 
     SequenceWindowTrainerImplConfig,
@@ -25,8 +26,7 @@ class LSTMAlgorithm(SequenceAlgorithmTmpl):
         pass
 
     def format_params(self, overrides: Dict[str, Any]) -> Dict[str, Any]:
-        params: Dict[str, Any] = self.default_params()
-        params.update(overrides)
+        params: Dict[str, Any] = format_dict(self.default_params(), overrides)
         # * check channel_weights
         output_dim: int = params.get("output_dim", 1)
         channel_weights: Any = params.get("channel_weights", None)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import List
+from typing import Dict, Any, Sequence
 from pathlib import Path
 
 import numpy as np
@@ -12,13 +12,14 @@ from ....arrays import Tensor
 from ....templates import PipelineTmpl
 from ....implements import DataBlock
 from ....arrays import Array, concat_array, to_numpy
-from ....utils import AuxiliaryIntegratedCoderTorchModule
+from ....utils import AuxiliaryIntegratedCoderTorchModule, format_name_list
 from .sequence_core import SequenceCoreTmpl
 
 
 class SequenceWindowPipelineImpl(PipelineTmpl):
 
     def fmu_export_artifacts(self, fmu_path: str | Path) -> None:
+        super().fmu_export_artifacts(fmu_path=fmu_path)
         if not isinstance(self.core_, SequenceCoreTmpl):
             raise ValueError(f"core_ must be an instance of SequenceCoreTmpl, but got {type(self.core_)}")
             pass
@@ -71,7 +72,7 @@ class SequenceWindowPipelineImpl(PipelineTmpl):
             y_initial: Array = np.zeros((window_dim, y_dim), dtype=x.dtype)
             y_initial[:y0.shape[0], :] = y0
             for i in range(y0.shape[0], window_dim):
-                y_initial[i, :] = x[i - window_dim, -y_dim:] # take the last y_dim values from x
+                y_initial[i, :] = y0[-1, :] # take the last y_dim values from y0
                 pass
             pass
         else:
@@ -95,6 +96,21 @@ class SequenceWindowPipelineImpl(PipelineTmpl):
             raise ValueError(f"core_ must be an instance of SequenceCoreTmpl, but got {type(self.core_)}")
             pass
         return self.core_.window_dim()
+        pass
+
+    def fmu_export_spec(self, input_names: Sequence[str] | None=None, output_names: Sequence[str] | None=None) -> Dict[str, Any]:
+        parent_spec: Dict[str, Any] = super().fmu_export_spec(input_names=input_names, output_names=output_names)
+        input_names = format_name_list(self.input_dim() - self.output_dim(), input_names, lambda index: f"x_{index+1}")
+        output_names = format_name_list(self.output_dim(), output_names, lambda index: f"y_{index+1}")
+        updated_spec: Dict[str, Any] = {
+            "input_names": input_names,
+            "output_names": output_names,
+            "require_initial_values": True,
+            "initial_names": format_name_list(self.output_dim(), None, lambda index: f"{output_names[index]}_initial"),
+            "initial_values": [0.0] * self.output_dim(),
+        }
+        parent_spec.update(updated_spec)
+        return parent_spec
         pass
 
     pass

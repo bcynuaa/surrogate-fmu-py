@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from typing import Dict, Any
+from typing import List, Dict, Any, Mapping
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import zipfile
 
 from .contracts import PipelineLike, AlgorithmLike, CoderLike, CoreLike
-from .algorithms import get_algorithm, get_available_algorithms
+from .algorithms import get_algorithm
 from .implements import Coder
+from .fmu import export, FMUExportOptions
+
 
 def load(path: str | Path) -> PipelineLike:
     surr_path: Path = Path(path)
@@ -33,4 +35,19 @@ def load(path: str | Path) -> PipelineLike:
         pass
     # * return the recovered pipeline
     return alg.create_pipeline(coder=coder, core=core, params=params)
+    pass
+
+
+def export_fmu(
+    pipeline: PipelineLike,
+    path: str | Path,
+    options: FMUExportOptions | Mapping[str, Any] | None = None,
+    input_names: List[str] | None = None,
+    output_names: List[str] | None = None,
+) -> Path:
+    spec: Mapping[str, Any] = pipeline.fmu_export_spec(input_names=input_names, output_names=output_names)
+    if isinstance(options, Mapping):
+        options = FMUExportOptions.from_dict(options)
+        pass
+    return export(spec=spec, path=path, options=options)
     pass

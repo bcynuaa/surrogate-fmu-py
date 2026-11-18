@@ -12,7 +12,6 @@ from sklearn.gaussian_process.kernels import (
     ConstantKernel,
     Kernel,
     Matern,
-    RationalQuadratic,
     WhiteKernel,
 )
 from sklearn.multioutput import MultiOutputRegressor
@@ -24,7 +23,7 @@ from ..shared import StaticCoreTmpl
 
 @dataclass(frozen=True)
 class GPCoreConfig:
-    kernel_type: str = "RBF"
+    kernel_type: str = "rbf"
     n_restarts_optimizer: int = 0
     alpha: float = 1e-6
     length_scale: float = 1.0
@@ -36,7 +35,7 @@ class GPCoreConfig:
     @classmethod
     def from_dict(cls, config: Dict[str, Any]={}) -> GPCoreConfig:
         return cls(
-            kernel_type=config.get("kernel_type", "RBF"),
+            kernel_type=config.get("kernel_type", "rbf"),
             n_restarts_optimizer=config.get("n_restarts_optimizer", 0),
             alpha=config.get("alpha", 1e-6),
             length_scale=config.get("length_scale", 1.0),
@@ -55,23 +54,18 @@ class GPCoreConfig:
 
 
 def make_kernel(config: GPCoreConfig) -> Kernel:
-    kernel_type: str = config.kernel_type.strip()
+    kernel_type: str = config.kernel_type.strip().upper()
     if kernel_type == "RBF":
         base: Kernel = RBF(length_scale=config.length_scale)
         pass
-    elif kernel_type == "Matern":
+    elif kernel_type == "MATERN":
         base = Matern(length_scale=config.length_scale, nu=config.nu)
         pass
-    elif kernel_type == "RationalQuadratic":
-        base = RationalQuadratic(
-            length_scale=config.length_scale,
-            alpha=config.rq_alpha,
-        )
-        pass
     else:
+        # gp onnx export only supports RBF and Matern
         raise ValueError(
             f"Unsupported gp kernel: {kernel_type!r}. "
-            "Only 'RBF' / 'Matern' / 'RationalQuadratic' are supported."
+            "Only 'RBF' / 'Matern' are supported."
         )
         pass
     return ConstantKernel(1.0) * base + WhiteKernel(
@@ -171,7 +165,7 @@ class GPCore(StaticCoreTmpl):
         checkpoint: Dict[str, Any] = joblib.load(model_path)
         saved_version: str = str(checkpoint["sklearn_version"])
         if saved_version != sklearn.__version__:
-            raise RuntimeError(
+            raise RuntimeWarning(
                 f"Checkpoint was written by scikit-learn {saved_version}, "
                 f"current environment is {sklearn.__version__}. "
                 "Predictions may drift silently across versions; re-train or align the environment."
@@ -183,7 +177,7 @@ class GPCore(StaticCoreTmpl):
         return self
         pass
 
-    def fmu_export_artifacts(self, fmu_path: str | Path) -> None:
+    def fmu_export_core_artifacts(self, fmu_path: str | Path) -> None:
         if self.model_ is None or not hasattr(self.model_, "estimators_"):
             raise RuntimeError("Model is not fitted. Call init() then fit() first.")
             pass

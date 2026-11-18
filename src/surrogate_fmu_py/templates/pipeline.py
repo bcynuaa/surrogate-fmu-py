@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Any, Self
+from typing import Sequence, Dict, Any, Self
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -8,7 +8,7 @@ import zipfile
 
 from ..contracts import DataBlockLike, CoderLike, CoreLike, PipelineLike
 from ..arrays import Array, to_numpy
-from ..utils import time_stamp
+from ..utils import time_stamp, get_token, format_name_list
 
 MANIFEST_FILENAME: str = "manifest.json"
 
@@ -86,8 +86,29 @@ class PipelineTmpl(PipelineLike):
         return self.coder_.output_dim()
         pass
 
+    def fmu_export_spec(self, input_names: Sequence[str] | None=None, output_names: Sequence[str] | None=None) -> Dict[str, Any]:
+        input_names = format_name_list(self.input_dim(), input_names, lambda index: f"x_{index+1}")
+        output_names = format_name_list(self.output_dim(), output_names, lambda index: f"y_{index+1}")
+        return {
+            "binary": self.core_.fmu_required_binary(),
+            "token": get_token(json.dumps(self.manifest(), indent=4)),
+            "input_names": input_names,
+            "output_names": output_names,
+            "require_initial_values": False,
+            "initial_names": None,
+            "initial_values": None,
+            "export_artifacts_func": self.fmu_export_artifacts,
+        }
+        pass
+
     def fmu_export_artifacts(self, fmu_path: str | Path) -> None:
-        raise NotImplementedError("fmu_export_artifacts is not implemented yet.")
+        fmu_path_dir: Path = Path(fmu_path)
+        fmu_path_dir.mkdir(parents=True, exist_ok=True)
+        fmu_documentation_path: Path = fmu_path_dir / "documentation"
+        fmu_documentation_path.mkdir(parents=True, exist_ok=True)
+        with open(fmu_documentation_path / "manifest.json", "w") as file:
+            json.dump(self.manifest(), file, indent=4)
+            pass
         pass
 
     def rollout(self, datablock: DataBlockLike, y0: Array | None, rollout_settings: Dict[str, Any] | None) -> DataBlockLike:

@@ -62,8 +62,8 @@ class SequenceAlgorithmTmpl(AlgorithmLike):
         return trainer
         pass
 
-    def default_params(self) -> Dict[str, Any]: ...
-    def format_params(self, overrides: Dict[str, Any]) -> Dict[str, Any]: ...
-    def create_core(self, params: Dict[str, Any]) -> CoreLike: ...
+    def default_params(self) -> Dict[str, Any]: raise NotImplementedError("default_params() must be implemented in subclass")
+    def format_params(self, overrides: Dict[str, Any]) -> Dict[str, Any]: raise NotImplementedError("format_params() must be implemented in subclass")
+    def create_core(self, params: Dict[str, Any]) -> CoreLike: raise NotImplementedError("create_core() must be implemented in subclass")
     
     pass

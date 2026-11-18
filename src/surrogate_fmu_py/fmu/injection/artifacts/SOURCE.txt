@@ -1,0 +1,6 @@
+source fmu-library-cpp
+commit 66bd5b5
+dirty true
+packed 2026-11-18T18:48:38+08:00
+platforms linux64-x64, win64-x64
+files 8
