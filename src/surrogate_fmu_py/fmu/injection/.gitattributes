@@ -1,10 +1,6 @@
-# FMU shared libraries and the ONNX Runtime they load are build outputs shipped
-# inside the Python package (src/surrogate_fmu/fmu/artifacts). Route them through
-# Git LFS so the repository history stays small.
-#
-# Requires Git LFS on the server (verified: the LFS endpoint answers 401, not
-# 404) and `git lfs install` on the client. Files must be re-added after this
-# rule is in place; `git lfs migrate` is only needed for already-committed blobs.
-*.dll   filter=lfs diff=lfs merge=lfs -text
-*.so    filter=lfs diff=lfs merge=lfs -text
-*.dylib filter=lfs diff=lfs merge=lfs -text
+# Ship FMU and ONNX Runtime libraries as ordinary Git blobs so a plain clone
+# contains the binaries. The binary attribute disables text conversion, text
+# diffs, and text merges; Git still tracks changes to these files.
+*.dll   binary
+*.so    binary
+*.dylib binary
