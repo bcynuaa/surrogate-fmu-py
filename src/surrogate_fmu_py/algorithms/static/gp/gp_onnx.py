@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from operator import irshift
 from typing import Any
 
 import numpy as np
